@@ -1,6 +1,10 @@
 {
   "name": "causemap-api",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/classy/causemap-api"
+  },
   "description": "CouchDB API implementation for causemap.org",
   "main": "index.js",
   "scripts": {
