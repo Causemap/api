@@ -1,0 +1,18 @@
+{
+  "name": "causemap-api",
+  "version": "0.0.0",
+  "description": "CouchDB API implementation for causemap.org",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.2.0",
+    "curry": "^1.2.0",
+    "async": "^0.9.0",
+    "follow": "^0.11.2",
+    "nano": "^5.10.0"
+  }
+}
