@@ -76,4 +76,56 @@ program.command('install')
     })
   });
 
+
+program.command('run')
+  .description('Run the API server')
+  .option(
+    '-l --couchdb-url <url>',
+    'CouchDB URL [http://localhost:5984]',
+    'http://localhost:5984')
+  .option(
+    '--es-host <host>',
+    'Elasticsearch Host (eg. http://localhost:9200)',
+    'http://localhost:9200')
+  .action(function(program){
+    var followers = {
+      search_indexer: require('./db/causemap/followers/search_indexer')
+    }
+
+    var errorReporter = function errorReporter(source_name){
+      return function(error){
+        util.log(source_name +' error');
+        console.log(error);
+      }
+    }
+
+    Object.keys(followers).forEach(function(follower_key){
+      var follower = followers[follower_key];
+
+      follower.db_host = program.couchdbUrl;
+      follower.on('error', errorReporter(follower.name));
+    })
+
+    followers.search_indexer.es_host = program.esHost;
+    followers.search_indexer.db = program.couchdbUrl +'/causemap';
+    followers.search_indexer.master_db = 'causemap';
+
+    followers.search_indexer.on('needs_updating', function(doc_type, doc_id){
+      util.log('updating: '+ doc_id +' '+ doc_type);
+    })
+
+    followers.search_indexer.on('needs_indexing', function(
+      index_name,
+      type,
+      doc
+    ){
+      util.log('indexed: '+ doc._id +' in '+ index_name);
+    })
+
+    Object.keys(followers).forEach(function(key){
+      followers[key].follow();
+    })
+  })
+
+
 program.parse(process.argv);
