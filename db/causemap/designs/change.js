@@ -39,7 +39,12 @@ module.exports = {
             name: body.field_name,
             to: body.field_value
           }
-        }
+        },
+        _attachments: body._attachments
+      }
+
+      if (new_change.changed.field.name == 'display_image'){
+        new_change.changed.field.to = new_change._id;
       }
 
       return [new_change, json_response({
