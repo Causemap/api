@@ -165,6 +165,7 @@ module.exports = {
           'period',
           'location',
           'alias',
+          'display_image',
           'description'
         ]
 
@@ -208,6 +209,20 @@ module.exports = {
               "A situation's 'alias' may contain only",
               "lowercase letters, numbers, dashes and underscores."
             ].join(' '));
+        }
+
+        if (field_name == 'display_image'){
+          allowed_keys.push('_attachments');
+
+          required(
+            new_doc.hasOwnProperty('_id'),
+            "'_id' is required"
+          )
+
+          required(
+            value == new_doc._id,
+            "'changed.field.value' must be the same as '_id'"
+          )
         }
       }
 
