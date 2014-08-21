@@ -85,6 +85,29 @@ module.exports = {
         'changed'
       ]
 
+      var allowed_keys = required_fields;
+      var changed = new_doc.changed;
+
+      var required_fields_for_changed = [
+        'doc',
+        'field'
+      ]
+
+      var required_fields_for_changed_doc = [
+        '_id',
+        'type'
+      ]
+
+      var changeable_doc_types = [
+        'situation',
+        'relationship'
+      ]
+
+      var required_fields_for_changed_field = [
+        'name',
+        'to'
+      ]
+
       required_fields.forEach(function(required_field){
         required(
           new_doc.hasOwnProperty(required_field),
@@ -92,17 +115,10 @@ module.exports = {
         )
       })
 
-      var changed = new_doc.changed;
-
       required(
         typeof changed == 'object' && changed != null,
         "'changed' must be an object"
       )
-
-      var required_fields_for_changed = [
-        'doc',
-        'field'
-      ]
 
       required_fields_for_changed.forEach(function(required_field_for_changed){
         required(
@@ -116,11 +132,6 @@ module.exports = {
         "'changed.doc' must be an object"
       )
 
-      var required_fields_for_changed_doc = [
-        '_id',
-        'type'
-      ]
-
       required_fields_for_changed_doc.forEach(function(field_name){
         required(
           changed.doc.hasOwnProperty(field_name),
@@ -132,19 +143,9 @@ module.exports = {
         typeof changed.doc._id == 'string',
         "'changed.doc._id' must be a string.");
 
-      var changeable_doc_types = [
-        'situation',
-        'relationship'
-      ]
-
       required(
         changeable_doc_types.indexOf(changed.doc.type) != -1,
         "'changed.doc.type' is not supported");
-
-      var required_fields_for_changed_field = [
-        'name',
-        'to'
-      ]
 
       required_fields_for_changed_field.forEach(function(field_name){
         required(
@@ -227,6 +228,8 @@ module.exports = {
           )
         }
       }
+
+      restrict_keys(new_doc, allowed_keys);
     }
   },
   views: {
