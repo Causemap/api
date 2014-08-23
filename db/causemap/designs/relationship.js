@@ -24,7 +24,7 @@ module.exports = {
       var body = JSON.parse(req.body);
       var json_response = require('util/response').json_response;
       var new_relationship = {
-        _id: req.uuid,
+        _id: [body.cause_id, 'caused', body.effect_id].join(':'),
         created_by: req.userCtx.name,
         creation_date: (new Date()).getTime(),
         type: 'relationship',
@@ -77,6 +77,17 @@ module.exports = {
       required(
         typeof new_doc.effect._id == 'string',
         "'effect._id' must be a string.");
+
+      var relationship_id = [
+        new_doc.cause._id,
+        'caused',
+        new_doc.effect._id
+      ].join(':');
+
+      required(
+        new_doc.hasOwnProperty('_id') && new_doc._id == relationship_id,
+        "'_id' must be "+ relationship_id
+      )
     }
   },
   views: {
