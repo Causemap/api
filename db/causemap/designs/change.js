@@ -44,7 +44,12 @@ module.exports = {
       }
 
       if (new_change.changed.field.name == 'display_image'){
-        new_change.changed.field.to = new_change._id;
+        new_change.changed.field.to = {
+          change_id: new_change._id,
+          filename: body.filename,
+          width: body.width,
+          height: body.height
+        }
       }
 
       return [new_change, json_response({
@@ -224,9 +229,38 @@ module.exports = {
             "'_id' is required"
           )
 
+          var required_field_fields = [
+            'change_id',
+            'filename',
+            'width',
+            'height'
+          ]
+
+          required_field_fields.forEach(function(field_field_name){
+            required(
+              value.hasOwnProperty(field_field_name),
+              "'changed.field.to."+ field_field_name +"' is required"
+            )
+          })
+
           required(
-            value == new_doc._id,
-            "'changed.field.value' must be the same as '_id'"
+            value.change_id == new_doc._id,
+            "'changed.field.to.change_id' must be '"+ new_doc._id +"'"
+          )
+
+          required(
+            typeof value.filename == 'string',
+            "'changed.field.to.filename' must be a string."
+          )
+
+          required(
+            typeof value.width == 'number',
+            "'changed.field.to.width' must be a number"
+          )
+
+          required(
+            typeof value.height == 'number',
+            "'changed.field.to.height' must be a number"
           )
         }
       }
