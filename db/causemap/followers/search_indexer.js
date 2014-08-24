@@ -1,3 +1,5 @@
+var _ = require('lodash');
+var async = require('async');
 var follow = require('follow');
 var feed = new follow.Feed({});
 var elasticsearch = require('elasticsearch');
@@ -34,19 +36,30 @@ feed.on('start', function(){
 
 feed.on('needs_indexing', function(index_name, type, doc){
 
-  delete doc._rev;
-  delete doc.immutable;
-  delete doc.revisable;
-  delete doc.created_by;
+  var indexable_doc = indexable(_.clone(doc));
+
+  if (indexable_doc.type == 'relationship'){
+    var relationship_types = ['cause', 'effect'];
+    relationship_types.map(function(relationship_type){
+      indexable_doc[relationship_type] = indexable(
+        indexable_doc[relationship_type]
+      )
+    })
+  }
+
+  if (!indexable_doc._id){
+    // don't index it if the base id wasn't read yet
+    return
+  }
 
   es_client.index({
     index: index_name,
     type: type,
-    id: doc._id,
-    body: doc
+    id: indexable_doc._id,
+    body: indexable_doc
   }, function(error, result){
     if (error) return feed.emit('error', error);
-    return feed.emit('indexed', doc._id)
+    return feed.emit('indexed', index_name, type, indexable_doc)
   })
 })
 
