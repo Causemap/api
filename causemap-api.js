@@ -110,16 +110,12 @@ program.command('run')
     followers.search_indexer.db = program.couchdbUrl +'/causemap';
     followers.search_indexer.master_db = 'causemap';
 
-    followers.search_indexer.on('needs_updating', function(doc_type, doc_id){
-      util.log('updating: '+ doc_id +' '+ doc_type);
-    })
-
-    followers.search_indexer.on('needs_indexing', function(
+    followers.search_indexer.on('indexed', function(
       index_name,
       type,
-      doc
+      indexed_doc
     ){
-      util.log('indexed: '+ doc._id +' in '+ index_name);
+      util.log('indexed: '+ indexed_doc._id +' in '+ index_name +'('+ type +')')
     })
 
     Object.keys(followers).forEach(function(key){
