@@ -5,6 +5,22 @@ var nano;
 var es_client;
 
 
+var DONT_INDEX_FIELDS = [
+  '_rev',
+  'immutable',
+  'revisable',
+  'created_by'
+]
+
+
+function indexable(doc){
+  DONT_INDEX_FIELDS.forEach(function(field_not_to_index){
+    delete doc[field_not_to_index];
+  })
+
+  return doc
+}
+
 
 feed.include_docs = true;
 
