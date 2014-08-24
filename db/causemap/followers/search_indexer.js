@@ -68,19 +68,91 @@ feed.on('needs_updating', function(doc_type, doc_id){
   var db = nano.use(feed.master_db)
 
   if (doc_type == 'situation'){
+    async.parallel([
+      function(parallel_cb){
+        db.view_with_list(
+          'situation',
+          'history',
+          'current',
+          {
+            startkey: [ doc_id ],
+            endkey: [ doc_id, {} ]
+          }, function(list_error, list_result){
+            if (list_error) return parallel_cb(list_error, null);
+            return parallel_cb(null, list_result)
+          }
+        )
+      },
+      function(parallel_cb){
+        // count the relationships
+        return parallel_cb(null, {})
+      }
+    ], function(parallel_error, parallel_results){
+      if (parallel_error) return feed.emit('error', parallel_error);
+
+      var situation = {};
+
+      parallel_results.map(function(parallel_result){
+        situation = _.extend(situation, parallel_result)
+      })
+
+      return feed.emit(
+        'needs_indexing',
+        'situations',
+        'situation',
+        situation
+      )
+    })
+  }
+
+  if (doc_type == 'relationship'){
+    // read the relationship, get the cause and effect
     db.view_with_list(
-      'situation',
+      'relationship',
       'history',
       'current',
       {
         startkey: [ doc_id ],
         endkey: [ doc_id, {} ]
-      },
-      function(err, result){
-        if (err) return feed.emit('error', err);
+      }, function(list_error, relationship_list_result){
+        if (list_error) return feed.emit('error', list_error);
+        return async.map(
+          ['cause', 'effect'],
+          function(relationship_type, map_cb){
+            // get the cause
+            db.view_with_list(
+              'situation',
+              'history',
+              'current',
+              {
+                startkey: [ relationship_list_result[relationship_type]._id ],
+                endkey: [ relationship_list_result[relationship_type]._id, {} ]
+              }, function(list_error, list_result){
+                if (list_error) return map_cb(list_error, null);
 
-        console.log(result)
-        feed.emit('needs_indexing', 'situations', 'situation', result)
+                var relationship_result = {};
+                relationship_result[relationship_type] = list_result;
+                return map_cb(null, relationship_result)
+              }
+            )
+          },
+          function(map_error, map_results){
+            if (map_error) return feed.emit('error', map_error);
+
+            var relationship = relationship_list_result;
+
+            map_results.map(function(map_result){
+              relationship = _.extend(relationship, map_result)
+            })
+
+            return feed.emit(
+              'needs_indexing',
+              'relationships',
+              'relationship',
+              relationship
+            )
+          }
+        )
       }
     )
   }
@@ -96,11 +168,34 @@ feed.on('change', function(change){
       doc.changed.doc.type,
       doc.changed.doc._id
     )
+
+    feed.emit(
+      'needs_indexing',
+      'changes',
+      [ doc.changed.doc.type, doc.changed.field.name, 'change' ].join('.'),
+      doc
+    )
+  }
+
+  if (doc.type == 'relationship'){
+    feed.emit(
+      'needs_updating',
+      'relationship',
+      doc._id
+    )
+
+    var relationship_types = ['cause', 'effect'];
+
+    relationship_types.forEach(function(relationship_type){
+      feed.emit(
+        'needs_updating',
+        'situation',
+        doc[relationship_type]._id
+      )
+    })
   }
 })
 
 
 
 module.exports = feed;
-
-
