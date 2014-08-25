@@ -121,8 +121,24 @@ feed.on('needs_updating', function(doc_type, doc_id){
         endkey: [ doc_id, {} ]
       }, function(list_error, relationship_list_result){
         if (list_error) return feed.emit('error', list_error);
+
+        var relationship_types = ['cause', 'effect'];
+
+        relationship_types.forEach(function(relationship_type){
+          var rel = {}
+          rel[relationship_type] = relationship_list_result[relationship_type];
+
+          if(!relationship_list_result[relationship_type]._id) return;
+
+          feed.emit(
+            'needs_updating',
+            'situation',
+            relationship_list_result[relationship_type]._id
+          )
+        })
+
         return async.map(
-          ['cause', 'effect'],
+          relationship_types,
           function(relationship_type, map_cb){
             // get the cause
             db.view_with_list(
@@ -189,16 +205,6 @@ feed.on('change', function(change){
       'relationship',
       doc._id
     )
-
-    var relationship_types = ['cause', 'effect'];
-
-    relationship_types.forEach(function(relationship_type){
-      feed.emit(
-        'needs_updating',
-        'situation',
-        doc[relationship_type]._id
-      )
-    })
   }
 })
 
