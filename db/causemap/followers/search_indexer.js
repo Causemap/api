@@ -34,6 +34,11 @@ feed.on('start', function(){
 });
 
 
+feed.on('indexed', function(){
+  if (feed.is_paused) return feed.resume();
+})
+
+
 feed.on('needs_indexing', function(index_name, type, doc){
 
   var indexable_doc = indexable(_.clone(doc));
@@ -160,6 +165,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
 
 feed.on('change', function(change){
+  feed.pause();
   var doc = change.doc;
 
   if (doc.type == 'change'){
