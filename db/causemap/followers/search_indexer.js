@@ -197,6 +197,28 @@ feed.on('change', function(change){
       [ doc.changed.doc.type, doc.changed.field.name, 'change' ].join('.'),
       doc
     )
+
+    if (doc.changed.doc.type == 'situation'){
+      // get the relationships
+      var db = nano.use(feed.master_db)
+
+      db.view(
+        'relationship',
+        'by_cause_or_effect',
+        {
+          startkey: [ doc.changed.doc._id ],
+          endkey: [ doc.changed.doc._id, {} ],
+          reduce: false
+        },
+        function(view_error, view_result){
+          if (view_error) return feed.emit('error', view_error);
+
+          view_result.rows.forEach(function(view_result_row){
+            feed.emit('needs_updating', 'relationship', view_result_row.id)
+          })
+        }
+      )
+    }
   }
 
   if (doc.type == 'relationship'){
