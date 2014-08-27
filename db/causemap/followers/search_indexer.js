@@ -39,6 +39,119 @@ feed.on('indexed', function(){
 })
 
 
+feed.on('needs_unindexing', function(indexed_doc){
+
+  if (indexed_doc.type == 'relationship'){
+
+    // update situations
+    feed.emit('needs_updating', indexed_doc.cause);
+    feed.emit('needs_updating', indexed_doc.effect);
+
+    return async.parallel([
+      function(parallel_cb){
+
+        // unindex changes
+        es_client.search({
+          index: 'changes',
+          type: 'change',
+          body: {
+            query: {
+              filtered: {
+                filter: {
+                  term: {
+                    'changed.doc._id': indexed_doc._id
+                  }
+                }
+              }
+            }
+          }
+        }, function(error, result){
+          if (error) return parallel_cb(error, null);
+          result.hits.hits.forEach(function(hit){
+            feed.emit('needs_unindexing', hit._source)
+            return parallel_cb(null, { unindexing: 'changes' })
+          })
+        })
+      },
+      function(parallel_cb){
+
+        // unindex relationship
+        es_client.delete({
+          index: 'relationships',
+          type: 'relationship',
+          id: indexed_doc._id
+        }, function(error, result){
+          if (error) return parallel_cb(error, null);
+          feed.emit('unindexed', 'relationships', 'relationship', indexed_doc)
+          return parallel_cb(null, { unindexed: 'relationship' })
+        })
+      }
+    ], function(error, results){
+      if (error) return feed.emit('error', error);
+    })
+  }
+
+  if (indexed_doc.type == 'change'){
+    // update the changed doc
+    feed.emit('needs_updating', indexed_doc.changed.doc);
+
+    return es_client.delete({
+      index: 'changes',
+      type: 'change',
+      id: indexed_doc._id
+    }, function(error, result){
+      if (error) return feed.emit('error', error);
+      feed.emit('unindexed', 'changes', 'change', indexed_doc)
+    })
+  }
+
+  if (indexed_doc.type == 'situation'){
+    return async.parallel([
+      function(parallel_cb){
+        // unindex all changes and relationships
+        es_client.search({
+          index: '_all',
+          body: {
+            query: {
+              filtered: {
+                filter: {
+                  or: [
+                    { term: { 'changed.doc._id': indexed_doc._id } },
+                    { term: { 'cause._id': indexed_doc._id } },
+                    { term: { 'effect._id': indexed_doc._id } }
+                  ]
+                }
+              }
+            }
+          }
+        }, function(error, result){
+          if (error) return parallel_cb(error, null);
+          result.hits.hits.forEach(function(hit){
+            feed.emit('needs_unindexing', hit._source)
+          })
+
+          return parallel_cb(null, { unindexing: 'changes and relationships' })
+        })
+      },
+      function(parallel_cb){
+        // unindexing the action situation
+        es_client.delete({
+          index: 'situations',
+          type: 'situation',
+          id: indexed_doc._id
+        }, function(error, result){
+          if (error) return parallel_cb(error, null);
+          feed.emit('unindexed', 'situations', 'situation', indexed_doc)
+          return parallel_cb(null, { unindexed: 'situation' })
+        })
+      }
+    ], function(error, results){
+      if (error) return feed.emit('error', error);
+    })
+  }
+})
+
+
 feed.on('needs_indexing', function(index_name, type, doc){
 
   var indexable_doc = indexable(_.clone(doc));
@@ -90,7 +203,31 @@ feed.on('needs_updating', function(doc_type, doc_id){
       },
       function(parallel_cb){
         // count the relationships
-        return parallel_cb(null, {})
+        db.view(
+          'relationship',
+          'by_cause_or_effect',
+          { key: [ doc_id, 'cause' ] },
+          function(view_error, view_result){
+            if (view_error) return parallel_cb(list_error, null);
+            return parallel_cb(null, {
+              total_effects: view_result.rows.length ? view_result.rows[0].value : 0
+            })
+          }
+        )
+      },
+      function(parallel_cb){
+        // count the relationships
+        db.view(
+          'relationship',
+          'by_cause_or_effect',
+          { key: [ doc_id, 'effect' ] },
+          function(view_error, view_result){
+            if (view_error) return parallel_cb(view_error, null);
+            return parallel_cb(null, {
+              total_causes: view_result.rows.length ? view_result.rows[0].value : 0
+            })
+          }
+        )
       }
     ], function(parallel_error, parallel_results){
       if (parallel_error) return feed.emit('error', parallel_error);
@@ -182,6 +319,36 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
 feed.on('change', function(change){
   feed.pause();
+
+  // handle deleted documents
+  if (change.deleted){
+    var query = {
+      "query": {
+        "filtered": {
+          "filter": {
+            "term": {
+              "_id": change.id
+            }
+          }
+        }
+      }
+    }
+
+    return es_client.search({
+      index: '_all',
+      body: query
+    }, function(error, result){
+      if (error) return feed.emit('error', error);
+      if (!result.hits.hits.length) return;
+
+      var indexed_doc = result.hits.hits.length ? result.hits.hits[0]._source : null;
+
+      if (indexed_doc){
+        return feed.emit('needs_unindexing', indexed_doc);
+      }
+    })
+  }
+
   var doc = change.doc;
 
   if (doc.type == 'change'){
