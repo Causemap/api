@@ -263,13 +263,13 @@ feed.on('needs_updating', function(doc_type, doc_id){
       }, function(list_error, relationship_list_result){
         if (list_error) return feed.emit('error', list_error);
 
+        if (!Object.keys(relationship_list_result).length) return
+
         var relationship_types = ['cause', 'effect'];
 
         relationship_types.forEach(function(relationship_type){
           var rel = {}
           rel[relationship_type] = relationship_list_result[relationship_type];
-
-          if(!relationship_list_result[relationship_type]._id) return;
 
           feed.emit(
             'needs_updating',
