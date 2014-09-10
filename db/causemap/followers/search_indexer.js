@@ -34,11 +34,6 @@ feed.on('start', function(){
 });
 
 
-feed.on('indexed', function(){
-  if (feed.is_paused) return feed.resume();
-})
-
-
 feed.on('needs_unindexing', function(indexed_doc){
 
   if (indexed_doc.type == 'relationship'){
