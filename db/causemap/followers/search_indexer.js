@@ -204,6 +204,11 @@ feed.on('needs_updating', function(doc_type, doc_id){
           { key: [ doc_id, 'cause' ] },
           function(view_error, view_result){
             if (view_error) return parallel_cb(list_error, null);
+
+            view_result.rows.forEach(function(row){
+              feed.emit('needs_updating', 'relationship', row.id);
+            })
+
             return parallel_cb(null, {
               total_effects: view_result.rows.length ? view_result.rows[0].value : 0
             })
@@ -218,6 +223,10 @@ feed.on('needs_updating', function(doc_type, doc_id){
           { key: [ doc_id, 'effect' ] },
           function(view_error, view_result){
             if (view_error) return parallel_cb(view_error, null);
+
+            view_result.rows.forEach(function(row){
+              feed.emit('needs_updating', 'relationship', row.id);
+            })
             return parallel_cb(null, {
               total_causes: view_result.rows.length ? view_result.rows[0].value : 0
             })
@@ -357,28 +366,6 @@ feed.on('change', function(change){
       [ doc.changed.doc.type, doc.changed.field.name, 'change' ].join('.'),
       doc
     )
-
-    if (doc.changed.doc.type == 'situation'){
-      // get the relationships
-      var db = nano.use(feed.master_db)
-
-      db.view(
-        'relationship',
-        'by_cause_or_effect',
-        {
-          startkey: [ doc.changed.doc._id ],
-          endkey: [ doc.changed.doc._id, {} ],
-          reduce: false
-        },
-        function(view_error, view_result){
-          if (view_error) return feed.emit('error', view_error);
-
-          view_result.rows.forEach(function(view_result_row){
-            feed.emit('needs_updating', 'relationship', view_result_row.id)
-          })
-        }
-      )
-    }
   }
 
   if (doc.type == 'relationship'){
