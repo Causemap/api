@@ -318,8 +318,6 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
 
 feed.on('change', function(change){
-  feed.pause();
-
   // handle deleted documents
   if (change.deleted){
     var query = {
