@@ -129,7 +129,7 @@ feed.on('needs_unindexing', function(indexed_doc){
         })
       },
       function(parallel_cb){
-        // unindexing the action situation
+        // unindexing the actual situation
         es_client.delete({
           index: 'situations',
           type: 'situation',
