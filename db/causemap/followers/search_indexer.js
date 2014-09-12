@@ -41,8 +41,8 @@ feed.on('needs_unindexing', function(indexed_doc){
   if (indexed_doc.type == 'relationship'){
 
     // update situations
-    feed.emit('needs_updating', indexed_doc.cause);
-    feed.emit('needs_updating', indexed_doc.effect);
+    feed.emit('needs_updating', 'situation', indexed_doc.cause._id);
+    feed.emit('needs_updating', 'situation', indexed_doc.effect._id);
 
     return async.parallel([
       function(parallel_cb){
