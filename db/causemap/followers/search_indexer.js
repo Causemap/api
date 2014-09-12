@@ -29,6 +29,8 @@ feed.include_docs = true;
 feed.on('start', function(){
   nano = require('nano')(feed.db_host);
   es_client = elasticsearch.Client({
+    sniffOnConnectionFault: true,
+    keepAlive: true,
     host: feed.es_host
   })
 });
