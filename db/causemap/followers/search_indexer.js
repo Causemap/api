@@ -370,6 +370,21 @@ feed.on('change', function(change){
     )
   }
 
+  if (doc.type == 'action'){
+    feed.emit(
+      'needs_updating',
+      doc.subject.type,
+      doc.subject._id
+    )
+
+    feed.emit(
+      'needs_indexing',
+      'actions',
+      [ doc.subject.type, doc.verb, 'action' ].join('.'),
+      doc
+    )
+  }
+
   if (doc.type == 'relationship'){
     feed.emit(
       'needs_updating',

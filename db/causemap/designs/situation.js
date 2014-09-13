@@ -105,6 +105,16 @@ module.exports = {
           )
         }
 
+        if (doc.type == 'action'){
+          var value = {};
+          value[doc.verb] = doc.creation_date;
+
+          emit(
+            [ doc.subject._id, doc.verb, doc.creation_date ],
+            value
+          )
+        }
+
         if (doc.type == 'situation'){
           emit(
             [doc._id, 0, doc.creation_date],

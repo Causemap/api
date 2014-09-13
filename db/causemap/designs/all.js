@@ -41,6 +41,7 @@ module.exports = {
       [
         'situation',
         'relationship',
+        'action',
         'change'
       ].indexOf(new_doc.type) != -1,
       "Unsupported doc.type"
