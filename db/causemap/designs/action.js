@@ -40,30 +40,28 @@ module.exports = {
         ok: true,
         id: new_action._id
       })]
+    },
+    unmark_for_deletion: function(subject_doc, req){
+      var json_response = require('util/response').json_response;
+
+      var new_action = {
+        _id: req.uuid,
+        type: 'action',
+        created_by: req.userCtx.name,
+        creation_date: (new Date()).getTime(),
+        immutable: true,
+        subject: {
+          _id: subject_doc._id,
+          type: subject_doc.type
+        },
+        verb: 'unmarked_for_deletion'
+      }
+
+      return [new_action, json_response({
+        ok: true,
+        id: new_action._id
+      })]
     }
-    // unmark_for_deletion: function(subject_doc, req){
-    //   var json_response = require('util/response').json_response;
-    //   var body = JSON.parse(req.body);
-
-    //   var new_action = {
-    //     _id: req.uuid,
-    //     type: 'action',
-    //     created_by: req.userCtx.name,
-    //     creation_date: (new Date()).getTime(),
-    //     immutable: true,
-    //     subject: {
-    //       _id: subject_doc._id,
-    //       type: subject_doc.type
-    //     },
-    //     verb: 'unmarked_for_deletion',
-    //     _attachments: body._attachments
-    //   }
-
-    //   return [new_action, json_response({
-    //     ok: true,
-    //     id: new_action._id
-    //   })]
-    // }
   },
   validate_doc_update: function(new_doc, old_doc, user_context){
     function required(be_true, message){
