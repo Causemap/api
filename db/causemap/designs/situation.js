@@ -175,6 +175,15 @@ module.exports = {
           })
         }
 
+        if (
+          current_version.marked_for_deletion
+          && current_version.marked_for_deletion > current_version.unmarked_for_deletion
+        ){
+          delete current_version.unmarked_for_deletion;
+        } else {
+          delete current_version.marked_for_deletion;
+        }
+
         return JSON.stringify(current_version)
       })
     }
