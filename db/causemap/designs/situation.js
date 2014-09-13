@@ -105,7 +105,7 @@ module.exports = {
           )
         }
 
-        if (doc.type == 'action'){
+        if (doc.type == 'action' && doc.subject.type == 'situation'){
           var value = {};
           value[doc.verb] = doc.creation_date;
 
