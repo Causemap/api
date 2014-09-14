@@ -160,6 +160,10 @@ program.command('run')
     followers.search_indexer.db = program.couchdbUrl +'/causemap';
     followers.search_indexer.master_db = 'causemap';
 
+    followers.search_indexer.on('change', function(){
+      util.log('change');
+    })
+
     followers.search_indexer.on('indexed', function(
       index_name,
       type,

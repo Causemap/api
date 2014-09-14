@@ -166,10 +166,14 @@ module.exports = {
     },
     current: function(head, req){
       provides('json', function(){
-        var current_version = {};
+        var current_version = {
+          total_changes: -2
+        };
         var row;
 
         while(row = getRow()){
+          current_version.total_changes++
+
           Object.keys(row.value).forEach(function(key){
             current_version[key] = row.value[key];
           })
