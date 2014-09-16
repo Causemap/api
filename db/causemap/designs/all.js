@@ -60,7 +60,7 @@ module.exports = {
       unchanged('created_by');
 
       required(
-        user_context.hasOwnProperty('name'),
+        user_context.hasOwnProperty('name') && user_context.name != null,
         "You must be logged in to continue."
       )
 
