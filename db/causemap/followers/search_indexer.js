@@ -35,13 +35,18 @@ feed.on('start', function(){
 });
 
 
+feed.on('unindexed', function(index_name, type, unindexed_doc){
+  if (unindexed_doc.type == 'relationship'){
+    // update situations
+    feed.emit('needs_updating', 'situation', unindexed_doc.cause._id);
+    feed.emit('needs_updating', 'situation', unindexed_doc.effect._id);
+  }
+})
+
+
 feed.on('needs_unindexing', function(indexed_doc){
 
   if (indexed_doc.type == 'relationship'){
-
-    // update situations
-    feed.emit('needs_updating', 'situation', indexed_doc.cause._id);
-    feed.emit('needs_updating', 'situation', indexed_doc.effect._id);
 
     return async.parallel([
       function(parallel_cb){
@@ -173,8 +178,19 @@ feed.on('needs_indexing', function(index_name, type, doc){
     body: indexable_doc
   }, function(error, result){
     if (error) return feed.emit('error', error);
-    return feed.emit('indexed', index_name, type, indexable_doc)
+    return feed.emit('indexed', index_name, type, indexable_doc, result)
   })
+})
+
+
+feed.on('indexed', function(index_name, type, indexed_doc, result){
+  if (indexed_doc.type == 'relationship'){
+    if (result.created){
+      // update the cause and effect situations
+      feed.emit('needs_updating', 'situation', indexed_doc.cause._id)
+      feed.emit('needs_updating', 'situation', indexed_doc.effect._id)
+    }
+  }
 })
 
 
@@ -202,7 +218,10 @@ feed.on('needs_updating', function(doc_type, doc_id){
         db.view(
           'relationship',
           'by_cause_or_effect',
-          { key: [ doc_id, 'cause' ] },
+          {
+            key: [ doc_id, 'cause' ],
+            reduce: false
+          },
           function(view_error, view_result){
             if (view_error) return parallel_cb(list_error, null);
 
@@ -211,7 +230,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
             })
 
             return parallel_cb(null, {
-              total_effects: view_result.rows.length ? view_result.rows[0].value : 0
+              total_effects: view_result.rows.length
             })
           }
         )
@@ -221,15 +240,19 @@ feed.on('needs_updating', function(doc_type, doc_id){
         db.view(
           'relationship',
           'by_cause_or_effect',
-          { key: [ doc_id, 'effect' ] },
+          {
+            key: [ doc_id, 'effect' ],
+            reduce: false
+          },
           function(view_error, view_result){
             if (view_error) return parallel_cb(view_error, null);
 
             view_result.rows.forEach(function(row){
               feed.emit('needs_updating', 'relationship', row.id);
             })
+
             return parallel_cb(null, {
-              total_causes: view_result.rows.length ? view_result.rows[0].value : 0
+              total_causes: view_result.rows.length
             })
           }
         )
@@ -267,17 +290,6 @@ feed.on('needs_updating', function(doc_type, doc_id){
         if (!Object.keys(relationship_list_result).length) return
 
         var relationship_types = ['cause', 'effect'];
-
-        relationship_types.forEach(function(relationship_type){
-          var rel = {}
-          rel[relationship_type] = relationship_list_result[relationship_type];
-
-          feed.emit(
-            'needs_updating',
-            'situation',
-            relationship_list_result[relationship_type]._id
-          )
-        })
 
         return async.map(
           relationship_types,
