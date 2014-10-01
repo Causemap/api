@@ -23,7 +23,7 @@ function indexable(doc){
   return doc
 }
 
-function read_situation(doc_id, callback){
+function read_situation(db, doc_id, callback){
   async.parallel([
     function(parallel_cb){
       db.view_with_list(
@@ -259,7 +259,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
   if (doc_type == 'situation'){
     async.parallel([
       function(parallel_cb){
-        read_situation(doc_id, parallel_cb)
+        read_situation(db, doc_id, parallel_cb)
       },
       function(parallel_cb){
         // update the relationships
