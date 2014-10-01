@@ -319,19 +319,15 @@ feed.on('needs_updating', function(doc_type, doc_id){
         return async.map(
           relationship_types,
           function(relationship_type, map_cb){
-            // get the cause
-            db.view_with_list(
-              'situation',
-              'history',
-              'current',
-              {
-                startkey: [ relationship_list_result[relationship_type]._id ],
-                endkey: [ relationship_list_result[relationship_type]._id, {} ]
-              }, function(list_error, list_result){
-                if (list_error) return map_cb(list_error, null);
+            // get the situation
+            read_situation(
+              db,
+              relationship_list_result[relationship_type]._id,
+              function(error, situation){
+                if (error) return map_cb(error, null);
 
                 var relationship_result = {};
-                relationship_result[relationship_type] = list_result;
+                relationship_result[relationship_type] = situation;
                 return map_cb(null, relationship_result)
               }
             )
