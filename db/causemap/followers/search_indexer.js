@@ -268,7 +268,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
           'by_cause_or_effect',
           {
             startkey: [ doc_id ],
-            endkey: [ doc_id, {} ]
+            endkey: [ doc_id, {} ],
             reduce: false
           },
           function(view_error, view_result){
