@@ -262,6 +262,22 @@ module.exports = {
             typeof value.height == 'number',
             "'changed.field.to.height' must be a number"
           )
+
+          required(
+            new_doc.hasOwnProperty('_attachments') &&
+            Object.keys(new_doc._attachments).length >= 1,
+            "Please choose a display image."
+          )
+
+          Object.keys(new_doc._attachments).forEach(function(key){
+            var att = new_doc._attachments[key];
+
+            required(
+              /^image\//.test(att.content_type),
+              "Only image files are allowed."
+            )
+          })
+
         }
       }
 
