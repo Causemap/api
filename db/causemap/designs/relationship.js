@@ -106,6 +106,16 @@ module.exports = {
           )
         }
 
+        if (doc.type == 'action' && doc.subject.type == 'relationship'){
+          var value = {};
+          value[doc.verb] = doc.creation_date;
+
+          emit(
+            [ doc.subject._id, doc.verb, doc.creation_date ],
+            value
+          )
+        }
+
         if (doc.type == 'relationship'){
           emit(
             [doc._id, 0, doc.creation_date],
@@ -138,13 +148,30 @@ module.exports = {
   lists: {
     current: function(head, req){
       provides('json', function(){
-        var current_version = {};
+        var current_version = {
+          total_changes: -2
+        };
         var row;
 
         while(row = getRow()){
+          current_version.total_changes++
+
           Object.keys(row.value).forEach(function(key){
             current_version[key] = row.value[key];
           })
+        }
+
+        if (
+          current_version.marked_for_deletion &&
+          current_version.unmarked_for_deletion
+        ){
+          if (
+            current_version.marked_for_deletion > current_version.unmarked_for_deletion
+          ){
+            delete current_version.unmarked_for_deletion;
+          } else {
+            delete current_version.marked_for_deletion;
+          }
         }
 
         return JSON.stringify(current_version)
