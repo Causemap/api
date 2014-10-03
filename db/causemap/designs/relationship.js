@@ -116,6 +116,16 @@ module.exports = {
           )
         }
 
+        if (doc.type == 'adjustment' && doc.adjusted.doc.type == 'relationship'){
+          var value = {};
+          value[doc.adjusted.field.name] = doc.adjusted.field.by;
+
+          emit(
+            [doc.adjusted.doc._id, doc.adjusted.field.name, doc.creation_date],
+            value
+          )
+        }
+
         if (doc.type == 'relationship'){
           emit(
             [doc._id, 0, doc.creation_date],
@@ -149,6 +159,7 @@ module.exports = {
     current: function(head, req){
       provides('json', function(){
         var current_version = {
+          strength: 0,
           total_changes: -2
         };
         var row;
@@ -157,6 +168,10 @@ module.exports = {
           current_version.total_changes++
 
           Object.keys(row.value).forEach(function(key){
+            if (key == 'strength'){
+              return current_version.strength += row.value[key];
+            }
+
             current_version[key] = row.value[key];
           })
         }
