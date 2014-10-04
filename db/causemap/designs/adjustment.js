@@ -14,7 +14,11 @@ module.exports = {
         return [doc, 'saved']
       }
 
-      var id = (req.id && req.id.split(':')[1]) || '';
+      var id = (
+        req.id && req.id.split(':').splice(
+          1, req.id.split(':').length
+        ).join(':')
+      ) || '';
 
       var new_adjustment = {
         _id: req.id,
@@ -41,7 +45,11 @@ module.exports = {
         return [doc, 'saved']
       }
 
-      var id = (req.id && req.id.split(':')[1]) || '';
+      var id = (
+        req.id && req.id.split(':').splice(
+          1, req.id.split(':').length
+        ).join(':')
+      ) || '';
 
       var new_adjustment = {
         _id: req.id,
@@ -68,7 +76,11 @@ module.exports = {
         return [doc, 'saved']
       }
 
-      var id = (req.id && req.id.split(':')[1]) || '';
+      var id = (
+        req.id && req.id.split(':').splice(
+          1, req.id.split(':').length
+        ).join(':')
+      ) || '';
 
       var new_adjustment = {
         _id: req.id,
