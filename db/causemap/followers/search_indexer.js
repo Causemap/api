@@ -417,6 +417,14 @@ feed.on('change', function(change){
     )
   }
 
+  if (doc.type == 'adjustment'){
+    feed.emit(
+      'needs_updating',
+      doc.adjusted.doc.type,
+      doc.adjusted.doc._id
+    )
+  }
+
   if (doc.type == 'relationship'){
     feed.emit(
       'needs_updating',
