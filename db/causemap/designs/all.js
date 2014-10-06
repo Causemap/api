@@ -65,6 +65,11 @@ module.exports = {
         "You must be logged in to continue."
       )
 
+      required(
+        typeof new_doc.created_by == 'string',
+        "'created_by' must be a string"
+      )
+
       if (!user_is('_admin')){
         required(
           new_doc.created_by == user_context.name,
