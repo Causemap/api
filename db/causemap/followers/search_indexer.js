@@ -11,6 +11,7 @@ var DONT_INDEX_FIELDS = [
   '_rev',
   'immutable',
   'revisable',
+  '_attachments',
   'created_by'
 ]
 
