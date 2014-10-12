@@ -96,6 +96,10 @@ module.exports = {
           var value = {};
           value[doc.changed.field.name] = doc.changed.field.to;
 
+          if (doc.changed.field.name == 'alias'){
+            value.alias.alias_creation_date = doc.creation_date;
+          }
+
           emit(
             [
               doc.changed.doc._id,
