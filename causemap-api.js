@@ -95,8 +95,8 @@ program.command('install')
             elasticsearch_client.indices.exists(
               { index: index_name },
               function(error, exists){
-                if (error) return parallel_cb(error, null);
-                if (exists) return parallel_cb(null, { index_exists: exists });
+                if (error) return map_cb(error, null);
+                if (exists) return map_cb(null, { index_exists: exists });
 
                 // create the index
                 elasticsearch_client.indices.create({
