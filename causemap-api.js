@@ -86,40 +86,32 @@ program.command('install')
       },
       function(parallel_cb){
         // install elasticsearch index mappings
-        var relationship_mapping = require(
-          './search/mappings/relationships_relationship'
-        )
+        var mappings = require('./search/mappings');
 
-        // check if it exists
-        elasticsearch_client.indices.exists(
-          { index: 'relationships' },
-          function(error, exists){
+        async.map(
+          Object.keys(mappings),
+          function(index_name, map_cb){
+            // check if it exists
+            elasticsearch_client.indices.exists(
+              { index: index_name },
+              function(error, exists){
+                if (error) return parallel_cb(error, null);
+                if (exists) return parallel_cb(null, { index_exists: exists });
+
+                // create the index
+                elasticsearch_client.indices.create({
+                  index: index_name,
+                  body: mappings[index_name]
+                }, function(error, result){
+                  if (error) return map_cb(error, null);
+                  return map_cb(null, { created: index_name, result: result })
+                })
+              }
+            )
+          },
+          function(error, result){
             if (error) return parallel_cb(error, null);
-            if (exists) return parallel_cb(null, { index_exists: exists });
-
-            // create the index
-            elasticsearch_client.indices.create({
-              index: 'relationships'
-            }, function(error, result){
-              if (error) return parallel_cb(error, null);
-
-              elasticsearch_client.indices.putMapping({
-                index: 'relationships',
-                type: 'relationship',
-                body: relationship_mapping
-              }, function(error, result){
-                if (error){
-                  elasticsearch_client.indices.delete({
-                    index: 'relationships'
-                  }, function(){})
-
-                  return parallel_cb(error, null);
-                }
-
-                return parallel_cb(null, result)
-              })
-
-            })
+            return parallel_cb(null, result)
           }
         )
       }
