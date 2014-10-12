@@ -46,6 +46,7 @@ module.exports = {
       if (new_change.changed.field.name == 'display_image'){
         new_change.changed.field.to = {
           change_id: new_change._id,
+          caption: body.caption,
           filename: body.filename,
           width: body.width,
           height: body.height
@@ -278,6 +279,25 @@ module.exports = {
             )
           })
 
+          if (value.caption){
+            required(
+              typeof value.caption == 'string',
+              "'changed.field.to.caption' must be a string."
+            )
+
+            required(
+              value.caption.length <= 500,
+              "Caption may not exceed 500 characters."
+            )
+          }
+
+          var restricted_keys = required_field_fields.splice(0,
+            required_field_fields.length
+          )
+
+          restricted_keys.push('caption')
+
+          restrict_keys(value, restricted_keys);
         }
       }
 
