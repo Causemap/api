@@ -388,6 +388,10 @@ feed.on('change', function(change){
 
   var doc = change.doc;
 
+  if (doc.type == 'situation' && doc.name){
+    feed.emit('needs_updating', 'situation', doc._id);
+  }
+
   if (doc.type == 'change'){
     feed.emit(
       'needs_updating',

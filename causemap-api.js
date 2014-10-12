@@ -130,9 +130,7 @@ program.command('run')
     'Elasticsearch Host (eg. http://localhost:9200)',
     'http://localhost:9200')
   .action(function(program){
-    var followers = {
-      search_indexer: require('./db/causemap/followers/search_indexer')
-    }
+    var followers = require('./db/causemap/followers');
 
     var errorReporter = function errorReporter(source_name){
       return function(error){
@@ -144,11 +142,11 @@ program.command('run')
     Object.keys(followers).forEach(function(follower_key){
       var follower = followers[follower_key];
 
+      follower.es_host = program.elasticsearchUrl;
       follower.db_host = program.couchdbUrl;
-      follower.on('error', errorReporter(follower.name));
+      follower.on('error', errorReporter(follower_key));
     })
 
-    followers.search_indexer.es_host = program.elasticsearchUrl;
     followers.search_indexer.db = program.couchdbUrl +'/causemap';
     followers.search_indexer.master_db = 'causemap';
 
@@ -170,6 +168,15 @@ program.command('run')
       unindexed_doc
     ){
       util.log('unindexed: '+ unindexed_doc._id +' in '+ index_name +' ('+ type +')')
+    })
+
+    followers.situation_namer.db = program.couchdbUrl +'/causemap';
+    followers.situation_namer.on('noname', function(situation){
+      util.log('situation without name: '+ situation._id);
+    })
+
+    followers.situation_namer.on('named_retroactively', function(situation, name){
+      util.log('named retroactively: '+ situation._id +', '+ name)
     })
 
     Object.keys(followers).forEach(function(key){

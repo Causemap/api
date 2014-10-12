@@ -35,6 +35,10 @@ module.exports = {
         ok: true,
         id: new_situation._id
       })]
+    },
+    name_retroactively: function(doc, req){
+      doc.name = JSON.parse(req.body).given_name;
+      return [doc, 'done'];
     }
   },
   validate_doc_update: function(new_doc, old_doc, user_context){
