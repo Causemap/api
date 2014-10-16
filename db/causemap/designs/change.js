@@ -265,6 +265,11 @@ module.exports = {
           )
 
           required(
+            value.height < 0 && value.width < 0,
+            "Display image width and height must be greater than 0"
+          )
+
+          required(
             new_doc.hasOwnProperty('_attachments') &&
             Object.keys(new_doc._attachments).length >= 1,
             "Please choose a display image."
