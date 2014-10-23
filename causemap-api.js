@@ -131,6 +131,7 @@ program.command('run')
     'http://localhost:9200')
   .action(function(program){
     var followers = require('./db/causemap/followers');
+    var auto_aliaser = require('./db/causemap/search-followers/auto_aliaser');
 
     var errorReporter = function errorReporter(source_name){
       return function(error){
@@ -150,6 +151,13 @@ program.command('run')
     followers.search_indexer.db = program.couchdbUrl +'/causemap';
     followers.search_indexer.master_db = 'causemap';
 
+    auto_aliaser.dburl = followers.search_indexer.db;
+    auto_aliaser.dbname = followers.search_indexer.master_db;
+
+    auto_aliaser.on('auto_aliased', function(doc, alias){
+      util.log('auto-aliased: '+ alias)
+    })
+
     followers.search_indexer.on('change', function(){
       util.log('change');
     })
@@ -160,6 +168,14 @@ program.command('run')
       indexed_doc
     ){
       util.log('indexed: '+ indexed_doc._id +' in '+ index_name +' ('+ type +')')
+    })
+
+    followers.search_indexer.on('indexed', function(
+      index_name,
+      type,
+      indexed_doc
+    ){
+      return auto_aliaser.emit('indexed', index_name, type, indexed_doc);
     })
 
     followers.search_indexer.on('unindexed', function(
@@ -182,6 +198,7 @@ program.command('run')
     Object.keys(followers).forEach(function(key){
       followers[key].follow();
     })
+    auto_aliaser.emit('start');
   })
 
 

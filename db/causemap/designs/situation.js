@@ -39,6 +39,10 @@ module.exports = {
     name_retroactively: function(doc, req){
       doc.name = JSON.parse(req.body).given_name;
       return [doc, 'done'];
+    },
+    default_alias: function(doc, req){
+      doc.alias = JSON.parse(req.body).given_alias;
+      return [doc, 'done'];
     }
   },
   validate_doc_update: function(new_doc, old_doc, user_context){
