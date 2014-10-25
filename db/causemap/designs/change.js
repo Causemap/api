@@ -265,7 +265,7 @@ module.exports = {
           )
 
           required(
-            value.height < 0 && value.width < 0,
+            value.height > 0 && value.width > 0,
             "Display image width and height must be greater than 0"
           )
 
