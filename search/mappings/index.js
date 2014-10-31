@@ -11,6 +11,7 @@ module.exports = {
   },
   changes: {
     mappings: {
+      '_default_': require('./changes.default'),
       'situation.alias.change': require(
         './situation.alias.change'
       )

@@ -7,6 +7,10 @@ module.exports = {
       "type": "long"
     },
     "effect": situation_mapping,
+    "created_by": {
+      "type": "string",
+      "index": "not_analyzed"
+    },
     "type": {
       "type": "string",
       "index": "not_analyzed"
