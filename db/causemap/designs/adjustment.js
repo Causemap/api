@@ -7,6 +7,14 @@ var toJSON = JSON.stringify;
 module.exports = {
   _id: '_design/adjustment',
   language: 'javascript',
+  shows: {
+    adjustment: function(doc, req){
+      return toJSON({
+        ok: !!doc,
+        doc: doc
+      })
+    }
+  },
   updates: {
     upvote_relationship: function(doc, req){
       if (doc){
