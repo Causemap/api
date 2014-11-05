@@ -9,10 +9,15 @@ module.exports = {
   language: 'javascript',
   shows: {
     adjustment: function(doc, req){
-      return toJSON({
-        ok: !!doc,
-        doc: doc
-      })
+      return {
+        body: toJSON({
+          ok: !!doc,
+          doc: doc
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
     }
   },
   updates: {
