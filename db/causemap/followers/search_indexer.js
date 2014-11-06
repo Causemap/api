@@ -41,33 +41,61 @@ function read_situation(db, doc_id, callback){
     },
     function(parallel_cb){
       // count the relationships
-      db.view(
-        'relationship',
-        'by_cause_or_effect',
-        { key: [ doc_id, 'cause' ] },
-        function(view_error, view_result){
-          if (view_error) return parallel_cb(view_error, null);
-
-          return parallel_cb(null, {
-            total_effects: view_result.rows.length ? view_result.rows[0].value : 0
-          })
+      async.map(['cause', 'effect'], function(rel_type, map_cb){
+        var q = {
+          index: 'relationships',
+          type: 'relationship',
+          size: 0,
+          body: {
+            query: {
+              filtered: {
+                filter: {
+                  bool: {
+                    must_not: [
+                      { exists: { field: 'marked_for_deletion' } }
+                    ],
+                    must: {
+                      term: {},
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-      )
-    },
-    function(parallel_cb){
-      // count the relationships
-      db.view(
-        'relationship',
-        'by_cause_or_effect',
-        { key: [ doc_id, 'effect' ] },
-        function(view_error, view_result){
-          if (view_error) return parallel_cb(view_error, null);
 
-          return parallel_cb(null, {
-            total_causes: view_result.rows.length ? view_result.rows[0].value : 0
-          })
+        q.body.query.filtered.filter.bool.must_not.push({
+          exists: {
+            field: (rel_type == 'cause' ? 'effect' : 'cause') +'.marked_for_deletion'
+          }
+        })
+
+        q.body.query.filtered.filter.bool.must.term[rel_type +'._id'] = doc_id;
+
+        es_client.search(q).then(function(result){
+          var return_me = {};
+
+          return_me[
+            'total_'+ (rel_type == 'cause' ? 'effects' : 'causes')
+          ] = result.hits.total;
+
+          return map_cb(null, return_me)
+        }, function(error){
+          return map_cb(error, null)
+        })
+      }, function(map_error, map_results){
+        if (map_error){
+          return parallel_cb(map_error, null)
         }
-      )
+
+        var parallel_result = {};
+
+        map_results.forEach(function(result){
+          parallel_result = _.extend(parallel_result, result)
+        })
+
+        return parallel_cb(null, parallel_result)
+      })
     }
   ], function(parallel_error, parallel_results){
     if (parallel_error) return callback(parallel_error, null);
