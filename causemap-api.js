@@ -85,6 +85,15 @@ program.command('install')
         })
       },
       function(parallel_cb){
+        // install user designs
+        var users_db = nano.use('_users');
+        var fixtures = require('./db/_users/fixtures');
+
+        return async.map(fixtures, function(fixture, map_callback){
+          insert_or_update(users_db, fixture, map_callback);
+        }, parallel_cb);
+      },
+      function(parallel_cb){
         // install elasticsearch index mappings
         var mappings = require('./search/mappings');
 
@@ -130,7 +139,8 @@ program.command('run')
     'Elasticsearch Host (eg. http://localhost:9200)',
     'http://localhost:9200')
   .action(function(program){
-    var followers = require('./db/causemap/followers');
+    var cm_followers = require('./db/causemap/followers');
+    var users_followers = require('./db/_users/followers');
 
     var errorReporter = function errorReporter(source_name){
       return function(error){
@@ -139,18 +149,24 @@ program.command('run')
       }
     }
 
-    Object.keys(followers).forEach(function(follower_key){
-      var follower = followers[follower_key];
+    Object.keys(cm_followers).forEach(function(cm_follower_key){
+      var cm_follower = cm_followers[cm_follower_key];
 
-      follower.es_host = program.elasticsearchUrl;
-      follower.db_host = program.couchdbUrl;
-      follower.on('error', errorReporter(follower_key));
+      cm_follower.es_host = program.elasticsearchUrl;
+      cm_follower.db_host = program.couchdbUrl;
+      cm_follower.on('error', errorReporter(cm_follower_key));
     })
 
-    followers.search_indexer.db = program.couchdbUrl +'/causemap';
-    followers.search_indexer.master_db = 'causemap';
+    cm_followers.search_indexer.db = program.couchdbUrl +'/causemap';
+    users_followers.search_indexer.db = program.couchdbUrl +'/_users';
 
-    followers.search_indexer.on('indexed', function(
+    cm_followers.search_indexer.master_db = 'causemap';
+
+    users_followers.search_indexer.on('needs_updating', function(type, id){
+      cm_followers.search_indexer.emit('needs_updating', type, id);
+    })
+
+    cm_followers.search_indexer.on('indexed', function(
       index_name,
       type,
       indexed_doc
@@ -158,7 +174,7 @@ program.command('run')
       util.log('indexed: '+ indexed_doc._id +' in '+ index_name +' ('+ type +')')
     })
 
-    followers.search_indexer.on('unindexed', function(
+    cm_followers.search_indexer.on('unindexed', function(
       index_name,
       type,
       unindexed_doc
@@ -166,17 +182,21 @@ program.command('run')
       util.log('unindexed: '+ unindexed_doc._id +' in '+ index_name +' ('+ type +')')
     })
 
-    followers.situation_namer.db = program.couchdbUrl +'/causemap';
-    followers.situation_namer.on('noname', function(situation){
+    cm_followers.situation_namer.db = program.couchdbUrl +'/causemap';
+    cm_followers.situation_namer.on('noname', function(situation){
       util.log('situation without name: '+ situation._id);
     })
 
-    followers.situation_namer.on('named_retroactively', function(situation, name){
+    cm_followers.situation_namer.on('named_retroactively', function(situation, name){
       util.log('named retroactively: '+ situation._id +', '+ name)
     })
 
-    Object.keys(followers).forEach(function(key){
-      followers[key].follow();
+    Object.keys(cm_followers).forEach(function(key){
+      cm_followers[key].follow();
+    })
+
+    Object.keys(users_followers).forEach(function(key){
+      users_followers[key].follow();
     })
   })
 

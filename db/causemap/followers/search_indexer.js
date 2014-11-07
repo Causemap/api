@@ -40,6 +40,26 @@ function read_situation(db, doc_id, callback){
       )
     },
     function(parallel_cb){
+      var user_db = nano.use('_users');
+
+      user_db.view(
+        'user',
+        'by_bookmarked',
+        {
+          startkey: [ doc_id ],
+          endkey: [ doc_id, {} ],
+        },
+        function(error, result){
+          if (error) return parallel_cb(error, null);
+          if (!result.rows.length) return parallel_cb(null, { total_bookmarks: 0 })
+
+          return parallel_cb(null, {
+            total_bookmarks: result.rows[0].value
+          });
+        }
+      )
+    },
+    function(parallel_cb){
       // count the relationships
       async.map(['cause', 'effect'], function(rel_type, map_cb){
         var q = {
