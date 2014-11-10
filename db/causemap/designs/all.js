@@ -42,6 +42,7 @@ module.exports = {
         'situation',
         'relationship',
         'adjustment',
+        'bookmark',
         'action',
         'change'
       ].indexOf(new_doc.type) != -1,

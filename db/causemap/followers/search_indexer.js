@@ -40,22 +40,20 @@ function read_situation(db, doc_id, callback){
       )
     },
     function(parallel_cb){
-      var user_db = nano.use('_users');
-
-      user_db.view(
-        'user',
-        'by_bookmarked',
+      db.view(
+        'bookmark',
+        'by_subject',
         {
           startkey: [ doc_id ],
-          endkey: [ doc_id, {} ],
+          endkey: [ doc_id, {} ]
         },
         function(error, result){
           if (error) return parallel_cb(error, null);
-          if (!result.rows.length) return parallel_cb(null, { total_bookmarks: 0 })
+          if (!result.rows.length) return parallel_cb(
+            null, { total_bookmarks: 0 }
+          )
 
-          return parallel_cb(null, {
-            total_bookmarks: result.rows[0].value
-          });
+          return parallel_cb(null, { total_bookmarks: result.rows[0].value })
         }
       )
     },
@@ -405,6 +403,9 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
 feed.on('change', function(change){
   // handle deleted documents
+
+  var doc = change.doc;
+
   if (change.deleted){
     var query = {
       "query": {
@@ -416,6 +417,10 @@ feed.on('change', function(change){
           }
         }
       }
+    }
+
+    if (doc.type == 'bookmark'){
+      feed.emit('needs_updating', doc.subject.type, doc.subject._id);
     }
 
     return es_client.search({
@@ -432,8 +437,6 @@ feed.on('change', function(change){
       }
     })
   }
-
-  var doc = change.doc;
 
   if (doc.type == 'situation' && doc.name){
     feed.emit('needs_updating', 'situation', doc._id);
@@ -465,6 +468,21 @@ feed.on('change', function(change){
       'needs_indexing',
       'actions',
       [ doc.subject.type, doc.verb, 'action' ].join('.'),
+      doc
+    )
+  }
+ 
+  if (doc.type == 'bookmark'){
+    feed.emit(
+      'needs_updating',
+      doc.subject.type,
+      doc.subject._id
+    )
+
+    feed.emit(
+      'needs_indexing',
+      'bookmarks',
+      'bookmark',
       doc
     )
   }
