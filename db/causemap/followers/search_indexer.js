@@ -471,7 +471,7 @@ feed.on('change', function(change){
       doc
     )
   }
- 
+
   if (doc.type == 'bookmark'){
     feed.emit(
       'needs_updating',

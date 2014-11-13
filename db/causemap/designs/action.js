@@ -20,6 +20,52 @@ module.exports = {
     response: 'exports.json_response = '+ json_response.toString()
   },
   updates: {
+    tag: function(subject_doc, req){
+      var json_response = require('util/response').json_response;
+      var body = JSON.parse(req.body);
+
+      var new_action = {
+        _id: req.uuid,
+        type: 'action',
+        created_by: req.userCtx.name,
+        creation_date: (new Date()).getTime(),
+        immutable: true,
+        subject: {
+          _id: subject_doc._id,
+          type: subject_doc.type
+        },
+        verb: 'tagged',
+        tag_name: body.tag_name
+      }
+
+      return [new_action, json_response({
+        ok: true,
+        id: new_action._id
+      })]
+    },
+    untag: function(subject_doc, req){
+      var json_response = require('util/response').json_response;
+      var body = JSON.parse(req.body);
+
+      var new_action = {
+        _id: req.uuid,
+        type: 'action',
+        created_by: req.userCtx.name,
+        creation_date: (new Date()).getTime(),
+        immutable: true,
+        subject: {
+          _id: subject_doc._id,
+          type: subject_doc.type
+        },
+        verb: 'untagged',
+        tag_name: body.tag_name
+      }
+
+      return [new_action, json_response({
+        ok: true,
+        id: new_action._id
+      })]
+    },
     mark_for_deletion: function(subject_doc, req){
       var json_response = require('util/response').json_response;
 
@@ -143,6 +189,8 @@ module.exports = {
       // if the change is made to a situation
       if (subject.type == 'situation'){
         var allowed_action_verbs = [
+          'tagged',
+          'untagged',
           'marked_for_deletion',
           'unmarked_for_deletion'
         ]
@@ -151,6 +199,26 @@ module.exports = {
           allowed_action_verbs.indexOf(verb) != -1,
           "'"+ verb +"' is not supported for type "+ subject.type
         )
+
+        if (['tagged', 'untagged'].indexOf(verb) != -1){
+          allowed_keys = allowed_keys.slice(0, allowed_keys.length);
+          allowed_keys.push('tag_name');
+
+          required(
+            new_doc.hasOwnProperty('tag_name'),
+            "'tag_name' is required"
+          )
+
+          required(
+            typeof new_doc.tag_name == 'string',
+            "'tag_name' must be a string"
+          )
+
+          required(
+            new_doc.tag_name.length <= 25,
+            "Tag must not exceed 25 characters"
+          )
+        }
       }
 
       if (subject.type == 'relationship'){

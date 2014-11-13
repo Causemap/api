@@ -111,7 +111,17 @@ module.exports = {
 
         if (doc.type == 'action' && doc.subject.type == 'situation'){
           var value = {};
-          value[doc.verb] = doc.creation_date;
+
+          if (['tagged', 'untagged'].indexOf(doc.verb) != -1){
+            value[doc.verb] = doc.tag_name;
+
+            return emit(
+              [ doc.subject._id, 'tags', doc.creation_date ],
+              value
+            )
+          } else {
+            value[doc.verb] = doc.creation_date;
+          }
 
           emit(
             [ doc.subject._id, doc.verb, doc.creation_date ],
@@ -171,6 +181,7 @@ module.exports = {
     current: function(head, req){
       provides('json', function(){
         var current_version = {
+          tags: [],
           total_changes: -2
         };
         var row;
@@ -179,6 +190,21 @@ module.exports = {
           current_version.total_changes++
 
           Object.keys(row.value).forEach(function(key){
+            if (key == 'tagged'){
+              if (current_version.tags.indexOf(row.value[key]) == -1){
+                return current_version.tags.push(row.value[key]);
+              }
+            }
+
+            if (key == 'untagged'){
+              if (current_version.tags.indexOf(row.value[key]) != -1){
+                return current_version.tags.splice(
+                  current_version.tags.indexOf(row.value[key]),
+                  1
+                )
+              }
+            }
+
             current_version[key] = row.value[key];
           })
         }
