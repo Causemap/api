@@ -153,31 +153,6 @@ module.exports = {
     }
   },
   lists: {
-    all_current: function(head, req){
-      provides('json', function(){
-        var situations_by_id = {};
-        var situations = [];
-        var row;
-
-        while(row = getRow()){
-          situations_by_id[row.key[0]] = situations_by_id[row.key[0]] || row.value;
-          Object.keys(row.value).forEach(function(key){
-            situations_by_id[row.key[0]][key] = row.value[key];
-          })
-        }
-
-        Object.keys(situations_by_id).forEach(function(id){
-          var situation = situations_by_id[id];
-          situations.push(situation);
-        })
-
-        situations = situations.sort(function(a, b){
-          return a.creation_date - b.creation_date
-        })
-
-        return JSON.stringify(situations)
-      })
-    },
     current: function(head, req){
       provides('json', function(){
         var current_version = {
