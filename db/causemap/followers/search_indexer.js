@@ -358,7 +358,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
       }, function(list_error, relationship_list_result){
         if (list_error) return feed.emit('error', list_error);
 
-        if (!Object.keys(relationship_list_result).length) return
+        if (!relationship_list_result.hasOwnProperty('_id')) return
 
         var relationship_types = ['cause', 'effect'];
 
