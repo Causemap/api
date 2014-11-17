@@ -33,6 +33,12 @@ module.exports = {
         },
       }
     },
+    "tag_suggest": {
+       "type": "completion",
+       "index_analyzer": "simple",
+       "search_analyzer": "simple",
+       "payloads": false
+    },
     "type": {
       "type": "string",
       "index": "not_analyzed"

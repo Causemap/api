@@ -276,6 +276,12 @@ feed.on('needs_indexing', function(index_name, type, doc){
     return
   }
 
+  if (indexable_doc.type == 'situation'){
+    indexable_doc.tag_suggest = {
+      input: indexable_doc.tags.slice(0, indexable_doc.tags.length -1)
+    }
+  }
+
   es_client.index({
     index: index_name,
     type: type,
