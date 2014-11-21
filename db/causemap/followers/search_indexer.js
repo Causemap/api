@@ -453,11 +453,6 @@ feed.on('change', function(change){
   }
 
   if (doc.type == 'change'){
-    if (
-        doc.changed.field.name == 'period' &&
-        typeof doc.changed.field.to == 'string'
-    ) return;
-
     feed.emit(
       'needs_updating',
       doc.changed.doc.type,
