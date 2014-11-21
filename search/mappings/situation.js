@@ -21,6 +21,19 @@ module.exports = {
         }
       }
     },
+    "period": {
+      "properties": {
+        "began": {
+          "type": "long"
+        },
+        "ended": {
+          "type": "long"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
     "display_image": {
       "properties": {
         "change_id": {

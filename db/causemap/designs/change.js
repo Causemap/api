@@ -57,6 +57,14 @@ module.exports = {
         ok: true,
         id: new_change._id
       })]
+    },
+    parse_period: function(change, req){
+      var json_response = require('util/response').json_response;
+      var body = JSON.parse(req.body);
+
+      change.changed.field.to = body.field_value;
+
+      return [change, json_response({ ok: true })]
     }
   },
   validate_doc_update: function(new_doc, old_doc, user_context){
@@ -203,6 +211,57 @@ module.exports = {
           required(
             value.length <= 64,
             "A situation's location may be no more than 64 characters long.");
+        }
+
+        if (field_name == 'period'){
+          if (typeof value == 'string'){
+            required(
+              value.length <= 128,
+              "A situation's period text must not exceed 128 characters"
+            )
+          } else {
+            required(
+              typeof value == 'object' && value != null,
+              "'changed.field.to' must be an object"
+            )
+
+            var period_value_keys = [
+              'text',
+              'began',
+              'ended'
+            ]
+
+            required(
+              value.hasOwnProperty('text'),
+              "Please enter the period when this situation took place"
+            )
+
+            if (value.hasOwnProperty('began')){
+              required(
+                typeof value.began == 'number',
+                "'changed.field.to.began' must be a number"
+              )
+
+              required(
+                value.began < (new Date()).getTime(),
+                "The beginning of this situation must be in the past"
+              )
+            }
+
+            if (value.hasOwnProperty('ended')){
+              required(
+                typeof value.ended == 'number',
+                "'changed.field.to.ended' must be a number"
+              )
+
+              required(
+                value.ended < (new Date()).getTime(),
+                "The end of this situation must be in the past"
+              )
+            }
+
+            restrict_keys(value, period_value_keys)
+          }
         }
 
         if (field_name == 'alias'){

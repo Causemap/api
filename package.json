@@ -16,9 +16,11 @@
     "async": "^0.9.0",
     "commander": "^2.2.0",
     "curry": "^1.2.0",
-    "elasticsearch": "^2.3.0",
+    "elasticsearch": "^3.0.0",
     "follow": "^0.11.2",
     "lodash": "^2.4.1",
-    "nano": "^5.10.0"
+    "moment": "^2.8.4",
+    "nano": "^5.10.0",
+    "request": "^2.48.0"
   }
 }

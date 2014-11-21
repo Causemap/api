@@ -7,6 +7,15 @@ var toJSON = JSON.stringify;
 module.exports = {
   _id: '_design/all',
   language: 'javascript',
+  updates: {
+    set_default_created_by: function(doc, req){
+      if (doc.hasOwnProperty('created_by')){
+        doc.created_by = 'jeff';
+      }
+
+      return [doc, 'done']
+    }
+  },
   filters: {
     design_docs: function(doc, req){
       if (doc._id.match(/^_design/)) return true;
@@ -28,6 +37,7 @@ module.exports = {
     }
 
     function unchanged(field) {
+      if (user_is('_admin')) return
       if (old_doc && toJSON(old_doc[field]) != toJSON(new_doc[field]))
         throw({ forbidden : "Field can't be changed: " + field });
     }

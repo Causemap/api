@@ -168,8 +168,22 @@ program.command('run')
     })
 
     cm_followers.situation_namer.db = program.couchdbUrl +'/causemap';
+    cm_followers.period_parser.db = program.couchdbUrl +'/causemap';
+    cm_followers.default_created_by.db = program.couchdbUrl +'/causemap';
     cm_followers.situation_namer.on('noname', function(situation){
       util.log('situation without name: '+ situation._id);
+    })
+
+    cm_followers.period_parser.on('period_parsed', function(change, new_value){
+      util.log('period parsed: '+ change._id +', '+ JSON.stringify(new_value))
+    })
+
+    cm_followers.default_created_by.on('set_default_created_by', function(id){
+      util.log('default created_by: '+ id)
+    })
+
+    cm_followers.period_parser.on('couldnt_parse', function(change, new_value){
+      util.log('couldn\'t parse: '+ change._id +', '+ new_value.text);
     })
 
     cm_followers.situation_namer.on('named_retroactively', function(situation, name){
