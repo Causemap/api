@@ -151,6 +151,15 @@ program.command('run')
 
     cm_followers.search_indexer.master_db = 'causemap';
 
+    var queued = 0;
+    cm_followers.search_indexer.on('update_queued', function(){
+      queued++;
+    })
+
+    cm_followers.search_indexer.on('consuming_update_queue', function(len){
+      util.log('consuming update queue: '+ len +' items from '+ queued +' calls');
+    })
+
     cm_followers.search_indexer.on('indexed', function(
       index_name,
       type,

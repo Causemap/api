@@ -130,6 +130,7 @@ function read_situation(db, doc_id, callback){
 
 
 feed.include_docs = true;
+feed.update_queue = {};
 
 feed.on('start', function(){
   nano = require('nano')(feed.db_host);
@@ -306,7 +307,27 @@ feed.on('indexed', function(index_name, type, indexed_doc, result){
 })
 
 
+feed.on('catchup', function(){
+  feed.emit('consuming_update_queue', Object.keys(feed.update_queue).length);
+
+  // consume the update queue
+  Object.keys(feed.update_queue).map(function(arg_string){
+    return JSON.parse(arg_string)
+  }).forEach(function(arg_array){
+    feed.emit('needs_updating', arg_array[0], arg_array[1]);
+  })
+})
+
+
 feed.on('needs_updating', function(doc_type, doc_id){
+  if (!feed.caught_up){
+    var serialized_args = JSON.stringify(arguments);
+    feed.emit('update_queued', serialized_args);
+
+    // queue the things that need updating
+    return feed.update_queue[serialized_args] = arguments;
+  }
+
   var db = nano.use(feed.master_db)
 
   if (doc_type == 'situation'){
