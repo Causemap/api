@@ -134,6 +134,7 @@ feed.include_docs = true;
 feed.on('start', function(){
   nano = require('nano')(feed.db_host);
   es_client = elasticsearch.Client({
+    requestTimeout: 600000,
     sniffOnConnectionFault: true,
     host: feed.es_host
   })
@@ -141,7 +142,6 @@ feed.on('start', function(){
 
 
 feed.on('unindexed', function(index_name, type, unindexed_doc){
-  feed.resume();
   if (unindexed_doc.type == 'relationship'){
     // update situations
     feed.emit('needs_updating', 'situation', unindexed_doc.cause._id);
@@ -296,7 +296,6 @@ feed.on('needs_indexing', function(index_name, type, doc){
 
 
 feed.on('indexed', function(index_name, type, indexed_doc, result){
-  feed.resume();
   if (indexed_doc.type == 'relationship'){
     if (result.created){
       // update the cause and effect situations
@@ -308,7 +307,6 @@ feed.on('indexed', function(index_name, type, indexed_doc, result){
 
 
 feed.on('needs_updating', function(doc_type, doc_id){
-  feed.pause();
   var db = nano.use(feed.master_db)
 
   if (doc_type == 'situation'){
@@ -412,7 +410,6 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
 feed.on('change', function(change){
   // handle deleted documents
-  feed.pause()
 
   var doc = change.doc;
 
