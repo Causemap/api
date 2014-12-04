@@ -215,8 +215,8 @@ module.exports = {
           )
 
           required(
-            new_doc.tag_name.length <= 25,
-            "Tag must not exceed 25 characters"
+            new_doc.tag_name.length <= 75,
+            "Tag must not exceed 75 characters"
           )
         }
       }
