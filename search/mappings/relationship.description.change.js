@@ -18,13 +18,7 @@ module.exports = {
               type: "string"
             },
             to: {
-              type: "string",
-              fields: {
-                untouched: {
-                  type: "string",
-                  index: "not_analyzed"
-                }
-              }
+              type: "string"
             }
           }
         }

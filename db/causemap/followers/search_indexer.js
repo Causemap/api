@@ -61,7 +61,7 @@ function read_situation(db, doc_id, callback){
       // count the relationships
       async.map(['cause', 'effect'], function(rel_type, map_cb){
         var q = {
-          index: 'relationships',
+          index: feed.es_index,
           type: 'relationship',
           size: 0,
           body: {
@@ -160,7 +160,7 @@ feed.on('needs_unindexing', function(indexed_doc){
 
         // unindex changes
         es_client.search({
-          index: 'changes',
+          index: feed.es_index,
           type: 'change',
           body: {
             query: {
@@ -185,7 +185,7 @@ feed.on('needs_unindexing', function(indexed_doc){
 
         // unindex relationship
         es_client.delete({
-          index: 'relationships',
+          index: feed.es_index,
           type: 'relationship',
           id: indexed_doc._id
         }, function(error, result){
@@ -204,7 +204,7 @@ feed.on('needs_unindexing', function(indexed_doc){
     feed.emit('needs_updating', indexed_doc.changed.doc);
 
     return es_client.delete({
-      index: 'changes',
+      index: feed.es_index,
       type: 'change',
       id: indexed_doc._id
     }, function(error, result){
@@ -218,7 +218,7 @@ feed.on('needs_unindexing', function(indexed_doc){
       function(parallel_cb){
         // unindex all changes and relationships
         es_client.search({
-          index: '_all',
+          index: feed.is_index,
           body: {
             query: {
               filtered: {
@@ -244,7 +244,7 @@ feed.on('needs_unindexing', function(indexed_doc){
       function(parallel_cb){
         // unindexing the actual situation
         es_client.delete({
-          index: 'situations',
+          index: feed.es_index,
           type: 'situation',
           id: indexed_doc._id
         }, function(error, result){
@@ -346,7 +346,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
             reduce: false
           },
           function(view_error, view_result){
-            if (view_error) return parallel_cb(list_error, null);
+            if (view_error) return parallel_cb(view_error, null);
 
             view_result.rows.forEach(function(row){
               feed.emit('needs_updating', 'relationship', row.id);
@@ -367,7 +367,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
       return feed.emit(
         'needs_indexing',
-        'situations',
+        feed.es_index,
         'situation',
         situation
       )
@@ -417,7 +417,7 @@ feed.on('needs_updating', function(doc_type, doc_id){
 
             return feed.emit(
               'needs_indexing',
-              'relationships',
+              feed.es_index,
               'relationship',
               relationship
             )
@@ -452,7 +452,7 @@ feed.on('change', function(change){
     }
 
     return es_client.search({
-      index: '_all',
+      index: feed.es_index,
       body: query
     }, function(error, result){
       if (error) return feed.emit('error', error);
@@ -479,7 +479,7 @@ feed.on('change', function(change){
 
     feed.emit(
       'needs_indexing',
-      'changes',
+      feed.es_index,
       [ doc.changed.doc.type, doc.changed.field.name, 'change' ].join('.'),
       doc
     )
@@ -494,7 +494,7 @@ feed.on('change', function(change){
 
     feed.emit(
       'needs_indexing',
-      'actions',
+      feed.es_index,
       [ doc.subject.type, doc.verb, 'action' ].join('.'),
       doc
     )
@@ -509,7 +509,7 @@ feed.on('change', function(change){
 
     feed.emit(
       'needs_indexing',
-      'bookmarks',
+      feed.es_index,
       'bookmark',
       doc
     )

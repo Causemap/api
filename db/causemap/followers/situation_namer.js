@@ -22,7 +22,7 @@ feed.on('change', function(change){
   if (change.doc.type != 'situation') return;
 
   var situation = change.doc;
-  var db = nano.use('causemap');
+  var db = nano.use(feed.db_name);
 
   if (situation.name) return;
 

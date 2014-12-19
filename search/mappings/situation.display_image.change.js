@@ -18,11 +18,21 @@ module.exports = {
               type: "string"
             },
             to: {
-              type: "string",
-              fields: {
-                untouched: {
-                  type: "string",
-                  index: "not_analyzed"
+              properties: {
+                caption: {
+                  type: "string"
+                },
+                change_id: {
+                  type: "string"
+                },
+                filename: {
+                  type: "string"
+                },
+                height: {
+                  type: "long"
+                },
+                width: {
+                  type: "long"
                 }
               }
             }

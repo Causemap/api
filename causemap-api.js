@@ -18,9 +18,18 @@ program.command('install')
     'CouchDB URL [http://localhost:5984]',
     'http://localhost:5984')
   .option(
+    '-n --couchdb-name <name>',
+    'CouchDB database name [causemap]',
+    'causemap')
+  .option(
     '-s --elasticsearch-url <url>',
     'Elasticsearch URL [http://localhost:9200]',
     'http://localhost:9200')
+  .option(
+    '-i --elasticsearch-index <index>',
+    'Elasticsearch index [causemap]',
+    'causemap'
+  )
   .action(function(program){
     var nano = require('nano')(program.couchdbUrl);
     var elasticsearch_client = new require('elasticsearch').Client({
@@ -48,13 +57,13 @@ program.command('install')
 
     async.parallel([
       function(parallel_cb){
-        nano.db.create('causemap', function(error, result){
+        nano.db.create(program.couchdbName, function(error, result){
           if (error && error.error != 'file_exists'){
             // if creation fails for any other reason, throw an error
             return parallel_cb(error, null);
           }
 
-          var causemap_db = nano.use('causemap');
+          var causemap_db = nano.use(program.couchdbName);
 
           async.parallel([
             function(callback){
@@ -88,30 +97,23 @@ program.command('install')
         // install elasticsearch index mappings
         var mappings = require('./search/mappings');
 
-        async.map(
-          Object.keys(mappings),
-          function(index_name, map_cb){
-            // check if it exists
-            elasticsearch_client.indices.exists(
-              { index: index_name },
-              function(error, exists){
-                if (error) return map_cb(error, null);
-                if (exists) return map_cb(null, { index_exists: exists });
-
-                // create the index
-                elasticsearch_client.indices.create({
-                  index: index_name,
-                  body: mappings[index_name]
-                }, function(error, result){
-                  if (error) return map_cb(error, null);
-                  return map_cb(null, { created: index_name, result: result })
-                })
-              }
-            )
-          },
-          function(error, result){
+        elasticsearch_client.indices.exists(
+          { index: program.elasticsearchIndex },
+          function(error, exists){
             if (error) return parallel_cb(error, null);
-            return parallel_cb(null, result)
+            if (exists) return parallel_cb(null, { index_exists: exists });
+
+            // create the index
+            elasticsearch_client.indices.create({
+              index: program.elasticsearchIndex,
+              body: mappings['causemap']
+            }, function(error, result){
+              if (error) return parallel_cb(error, null);
+              return parallel_cb(
+                null,
+                { created: program.elasticsearchIndex, result: result }
+              )
+            })
           }
         )
       }
@@ -126,9 +128,17 @@ program.command('run')
     'CouchDB URL [http://localhost:5984]',
     'http://localhost:5984')
   .option(
+    '-n --couchdb-name <name>',
+    'CouchDB database name [causemap]',
+    'causemap')
+  .option(
     '-s --elasticsearch-url <host>',
     'Elasticsearch Host (eg. http://localhost:9200)',
     'http://localhost:9200')
+  .option(
+    '-i --elasticsearch-index <name>',
+    'Elasticsearch index [causemap]',
+    'causemap')
   .action(function(program){
     var cm_followers = require('./db/causemap/followers');
 
@@ -143,13 +153,15 @@ program.command('run')
       var cm_follower = cm_followers[cm_follower_key];
 
       cm_follower.es_host = program.elasticsearchUrl;
+      cm_follower.es_index = program.elasticsearchIndex;
       cm_follower.db_host = program.couchdbUrl;
+      cm_follower.db_name = program.couchdbName;
       cm_follower.on('error', errorReporter(cm_follower_key));
     })
 
-    cm_followers.search_indexer.db = program.couchdbUrl +'/causemap';
+    cm_followers.search_indexer.db = program.couchdbUrl +'/'+ program.couchdbName;
 
-    cm_followers.search_indexer.master_db = 'causemap';
+    cm_followers.search_indexer.master_db = program.couchdbName;
 
     var queued = 0;
     cm_followers.search_indexer.on('update_queued', function(){
@@ -157,7 +169,9 @@ program.command('run')
     })
 
     cm_followers.search_indexer.on('consuming_update_queue', function(len){
-      util.log('consuming update queue: '+ len +' items from '+ queued +' calls');
+      util.log(
+        'consuming update queue: '+ len +' items from '+ queued +' calls'
+      );
     })
 
     cm_followers.search_indexer.on('indexed', function(
@@ -176,9 +190,9 @@ program.command('run')
       util.log('unindexed: '+ unindexed_doc._id +' in '+ index_name +' ('+ type +')')
     })
 
-    cm_followers.situation_namer.db = program.couchdbUrl +'/causemap';
-    cm_followers.period_parser.db = program.couchdbUrl +'/causemap';
-    cm_followers.default_created_by.db = program.couchdbUrl +'/causemap';
+    cm_followers.situation_namer.db = program.couchdbUrl +'/'+ program.couchdbName;
+    cm_followers.period_parser.db = program.couchdbUrl +'/'+ program.couchdbName;
+    cm_followers.default_created_by.db = program.couchdbUrl +'/'+ program.couchdbName;
     cm_followers.situation_namer.on('noname', function(situation){
       util.log('situation without name: '+ situation._id);
     })

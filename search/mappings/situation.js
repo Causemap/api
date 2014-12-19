@@ -1,60 +1,121 @@
 module.exports = {
-  "properties": {
-    "_id": {
-      "type": "string",
-      "index": "not_analyzed"
-    },
-    "created_by": {
-      "type": "string",
-      "index": "not_analyzed"
-    },
-    "alias": {
-      "type": "multi_field",
-      "fields": {
-        "alias": {
-          "type": "string",
-          "index": "analyzed"
-        },
-        "untouched": {
-          "type": "string",
-          "index": "not_analyzed"
+  properties: {
+    alias: {
+      type: "string",
+      fields: {
+        untouched: {
+          type: "string",
+          index: "not_analyzed"
         }
       }
     },
-    "period": {
-      "properties": {
-        "began": {
-          "type": "long"
+    created_by: {
+      type: "string",
+      index: "not_analyzed"
+    },
+    creation_date: {
+      type: "long"
+    },
+    description: {
+      type: "string"
+    },
+    display_image: {
+      properties: {
+        caption: {
+          type: "string"
         },
-        "ended": {
-          "type": "long"
+        change_id: {
+          type: "string",
+          index: "not_analyzed"
         },
-        "text": {
-          "type": "string"
+        filename: {
+          type: "string",
+          index: "not_analyzed"
+        },
+        height: {
+          type: "long"
+        },
+        width: {
+          type: "long"
         }
       }
     },
-    "display_image": {
-      "properties": {
-        "change_id": {
-          "type": "string",
-          "index": "not_analyzed"
+    location: {
+      type: "string"
+    },
+    marked_for_deletion: {
+      type: "long"
+    },
+    name: {
+      type: "string"
+    },
+    period: {
+      properties: {
+        began: {
+          type: "long"
         },
-        "filename": {
-          "type": "string",
-          "index": "not_analyzed"
+        ended: {
+          type: "long"
         },
+        period: {
+          type: "string"
+        },
+        tag_suggest: {
+          properties: {
+            input: {
+              type: "string"
+            }
+          }
+        },
+        tagged: {
+          type: "string"
+        },
+        text: {
+          type: "string"
+        },
+        total_bookmarks: {
+          type: "long"
+        },
+        total_causes: {
+          type: "long"
+        },
+        total_effects: {
+          type: "long"
+        }
       }
     },
-    "tag_suggest": {
-       "type": "completion",
-       "index_analyzer": "simple",
-       "search_analyzer": "simple",
-       "payloads": false
+    tag_suggest: {
+      type: "completion",
+      analyzer: "simple",
+      payloads: false,
+      preserve_separators: true,
+      preserve_position_increments: true,
+      max_input_length: 50
     },
-    "type": {
-      "type": "string",
-      "index": "not_analyzed"
+    tagged: {
+      type: "string"
+    },
+    tags: {
+      type: "string"
+    },
+    total_bookmarks: {
+      type: "long"
+    },
+    total_causes: {
+      type: "long"
+    },
+    total_changes: {
+      type: "long"
+    },
+    total_effects: {
+      type: "long"
+    },
+    type: {
+      type: "string",
+      index: "not_analyzed"
+    },
+    unmarked_for_deletion: {
+      type: "long"
     }
   }
 }
