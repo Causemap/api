@@ -204,13 +204,39 @@ module.exports = {
         }
 
         if (field_name == 'location'){
-          required(
-            typeof value == 'string',
-            "A situation's location must be a string.");
+          if (typeof value != 'string'){
+            required(
+              typeof value == 'object' && value != null,
+              "'changed.field.to' must be an object"
+            )
 
-          required(
-            value.length <= 64,
-            "A situation's location may be no more than 64 characters long.");
+            required(
+              value.hasOwnProperty('text'),
+              "'changed.field.to.text' is required"
+            )
+
+            required(
+              typeof value.text == 'string',
+              "A situation's location must be a string.");
+
+            required(
+              value.text.length <= 64,
+              "A situation's location may be no more than 64 characters long.");
+
+            restrict_keys(value, [
+              'text',
+              'no_coords',
+              'coords'
+            ])
+          } else {
+            required(
+              typeof value == 'string',
+              "A situation's location must be a string.");
+
+            required(
+              value.length <= 64,
+              "A situation's location may be no more than 64 characters long.");
+          }
         }
 
         if (field_name == 'period'){

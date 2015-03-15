@@ -41,7 +41,14 @@ module.exports = {
       }
     },
     location: {
-      type: "string"
+      properties: {
+        coords: {
+          type: "geo_point"
+        },
+        text: {
+          type: "string"
+        }
+      }
     },
     marked_for_deletion: {
       type: "long"

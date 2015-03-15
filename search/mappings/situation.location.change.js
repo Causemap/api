@@ -18,7 +18,14 @@ module.exports = {
               type: "string"
             },
             to: {
-              type: "string"
+              properties: {
+                coords: {
+                  type: "geo_point"
+                },
+                text: {
+                  type: "string"
+                }
+              }
             }
           }
         }

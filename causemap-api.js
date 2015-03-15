@@ -159,6 +159,7 @@ program.command('run')
       cm_follower.on('error', errorReporter(cm_follower_key));
     })
 
+    cm_followers.location_parser.api_key = 'AIzaSyCasNT4BirZclPWHGrjKERIZ_WZu4_BDmk';
     cm_followers.search_indexer.db = program.couchdbUrl +'/'+ program.couchdbName;
 
     cm_followers.search_indexer.master_db = program.couchdbName;
@@ -192,6 +193,7 @@ program.command('run')
 
     cm_followers.situation_namer.db = program.couchdbUrl +'/'+ program.couchdbName;
     cm_followers.period_parser.db = program.couchdbUrl +'/'+ program.couchdbName;
+    cm_followers.location_parser.db = program.couchdbUrl +'/'+ program.couchdbName;
     cm_followers.default_created_by.db = program.couchdbUrl +'/'+ program.couchdbName;
     cm_followers.situation_namer.on('noname', function(situation){
       util.log('situation without name: '+ situation._id);
@@ -211,6 +213,10 @@ program.command('run')
 
     cm_followers.situation_namer.on('named_retroactively', function(situation, name){
       util.log('named retroactively: '+ situation._id +', '+ name)
+    })
+
+    cm_followers.location_parser.on('location_parsed', function(change, new_value){
+      util.log('location parsed: '+ change.changed.doc._id +', '+ new_value)
     })
 
     Object.keys(cm_followers).forEach(function(key){
